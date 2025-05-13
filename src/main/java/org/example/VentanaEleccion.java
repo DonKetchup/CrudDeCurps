@@ -59,7 +59,6 @@ public class VentanaEleccion extends JFrame {
 
     }
 
-
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(new FlatDarkLaf());

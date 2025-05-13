@@ -2,9 +2,13 @@ package org.example;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 public class VentanaRead extends JFrame {
     private JLabel lblTitulo, lblNombre, lblApellidoP, lblApellidoM, lblCurp, lblFechaNac, lblGenero, lblEstado;
@@ -14,10 +18,12 @@ public class VentanaRead extends JFrame {
     private JButton btnRegresar;
     private JComboBox<String> cbEstado;
     private JPanel panelPrincipal;
+    private JPanel panelFoto; // Panel para la foto
+    private JLabel fotoLabel; // Label para mostrar la foto
 
     public VentanaRead() {
         setTitle("Consultar CURP");
-        setSize(500, 450);
+        setSize(500, 530);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -29,6 +35,17 @@ public class VentanaRead extends JFrame {
     private void inicializarComponentes() {
         lblTitulo = new JLabel("Consulta de CURP", JLabel.CENTER);
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
+
+        panelFoto = new JPanel();
+        panelFoto.setPreferredSize(new Dimension(120, 160));
+        panelFoto.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        fotoLabel = new JLabel();
+        fotoLabel.setHorizontalAlignment(JLabel.CENTER);
+        fotoLabel.setVerticalAlignment(JLabel.CENTER);
+        panelFoto.setLayout(new BorderLayout());
+        panelFoto.add(fotoLabel, BorderLayout.CENTER); // Agrega fotoLabel al panelFoto
+
+
 
         lblNombre = new JLabel("Nombre(s): ", JLabel.RIGHT);
         lblApellidoP = new JLabel("Apellido paterno: ", JLabel.RIGHT);
@@ -72,6 +89,10 @@ public class VentanaRead extends JFrame {
     }
 
     private void agregarComponentes() {
+        JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        panelSuperior.add(panelFoto);
+        panelSuperior.add(lblTitulo);
+
         JPanel panelFormulario = new JPanel(new GridLayout(7, 2, 10, 10));
 
         panelFormulario.add(lblCurp);
@@ -98,7 +119,7 @@ public class VentanaRead extends JFrame {
         JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panelBoton.add(btnRegresar);
 
-        panelPrincipal.add(lblTitulo, BorderLayout.NORTH);
+        panelPrincipal.add(panelSuperior, BorderLayout.NORTH); // Agrega el panel superior
         panelPrincipal.add(panelFormulario, BorderLayout.CENTER);
         panelPrincipal.add(panelBoton, BorderLayout.SOUTH);
 
@@ -112,8 +133,6 @@ public class VentanaRead extends JFrame {
                 buscarPersona();
             }
         });
-
-
 
         txtCurp.addKeyListener(new KeyAdapter() {
             @Override
@@ -132,6 +151,7 @@ public class VentanaRead extends JFrame {
     }
 
     private void buscarPersona() {
+
         String curp = txtCurp.getText().trim();
         if (curp.length() != 18) {
             JOptionPane.showMessageDialog(this, "El CURP debe tener 18 caracteres", "Error", JOptionPane.ERROR_MESSAGE);
@@ -145,16 +165,60 @@ public class VentanaRead extends JFrame {
             txtApellidoMaterno.setText(persona.getApellidoMaterno());
             txtFechaNac.setText(persona.getFechaNac().toString());
 
-            if (persona.getGenero().equalsIgnoreCase("Femenino")) {
+            if (persona.getGenero().equalsIgnoreCase("Masculino")) {
                 rbFemenino.setSelected(true);
+                cargarImagen("IMG/h.jpg");
             } else {
                 rbMasculino.setSelected(true);
+                cargarImagen("IMG/m.PNG");
             }
 
             cbEstado.setSelectedItem(persona.getEstado());
         } else {
             JOptionPane.showMessageDialog(this, "No se encontró un registro con ese CURP.", "No encontrado", JOptionPane.INFORMATION_MESSAGE);
             limpiarCampos();
+            cargarImagenPredeterminada("IMG/m.PNG"); // Restablece la imagen por defecto
+        }
+    }
+
+    private void cargarImagen(String rutaArchivo) {
+        try {
+            File imageFile = new File(rutaArchivo);
+            if (!imageFile.exists() || !imageFile.canRead()) {
+                System.err.println("Error al cargar la imagen: " + rutaArchivo + ". Archivo no encontrado o sin permisos.");
+                fotoLabel.setIcon(null);
+                fotoLabel.setText("Foto No Disponible");
+                return;
+            }
+            BufferedImage image = ImageIO.read(imageFile);
+            Image scaledImage = image.getScaledInstance(120, 160, Image.SCALE_SMOOTH);
+            ImageIcon imageIcon = new ImageIcon(scaledImage);
+            fotoLabel.setIcon(imageIcon);
+            fotoLabel.setText(null); // Limpia el texto si había un error
+        } catch (IOException e) {
+            System.err.println("Error al cargar la imagen: " + rutaArchivo + ": " + e.getMessage());
+            fotoLabel.setIcon(null);
+            fotoLabel.setText("Error de Carga");
+        }
+    }
+
+    private void cargarImagenPredeterminada(String rutaArchivo) {
+        try {
+            File imageFile = new File(rutaArchivo);
+            if (imageFile.exists() && imageFile.canRead()) {
+                BufferedImage image = ImageIO.read(imageFile);
+                Image scaledImage = image.getScaledInstance(120, 160, Image.SCALE_SMOOTH);
+                ImageIcon imageIcon = new ImageIcon(scaledImage);
+                fotoLabel.setIcon(imageIcon);
+                fotoLabel.setText(null);
+            } else {
+                fotoLabel.setText("Foto No Encontrada");
+                fotoLabel.setIcon(null);
+            }
+        } catch (IOException e) {
+            System.err.println("Error al cargar la imagen predeterminada: " + e.getMessage());
+            fotoLabel.setText("Error de Carga");
+            fotoLabel.setIcon(null);
         }
     }
 
